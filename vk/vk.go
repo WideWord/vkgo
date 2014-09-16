@@ -22,7 +22,7 @@ func NewClient() *Client {
 	return client
 }
 
-func (client *Client) authServer(id string, secret string) (err error) {
+func (client *Client) AuthServer(id string, secret string) (err error) {
 	client.appId = id
 	client.appSecret = secret
 
@@ -52,7 +52,7 @@ func (client *Client) authServer(id string, secret string) (err error) {
 	return nil
 }
 
-func (client *Client) call(method string, params []string, response interface{}) (err error) {
+func (client *Client) Call(method string, params []string, response interface{}) (err error) {
 	query := fmt.Sprintf("https://api.vk.com/method/%s?v=5.24&access_token=%s&%s", client.serverAccessToken, strings.Join(params, "&"))
 
 	resp, err := http.Get(query)
