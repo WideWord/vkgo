@@ -4,10 +4,10 @@ package vk
 import(
 	"net/http"
 	"fmt"
-	"strings"
 	"errors"
 	"io/ioutil"
 	"encoding/json"
+	"log"
 )
 
 
@@ -27,6 +27,8 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 	client.appSecret = secret
 
 	query := fmt.Sprintf("https://oauth.vk.com/access_token?client_id=%s&client_secret=%s&v=5.24&grant_type=client_credentials", client.appId, client.appSecret)
+
+	log.Printf("%s\n", query)
 
 	resp, err := http.Get(query)
 	if err != nil { return }
@@ -52,8 +54,10 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 	return nil
 }
 
-func (client *Client) Call(method string, params []string, response interface{}) (err error) {
-	query := fmt.Sprintf("https://api.vk.com/method/%s?v=5.24&access_token=%s&%s", client.serverAccessToken, strings.Join(params, "&"))
+func (client *Client) PlainCall(method string, params string, response interface{}) (err error) {
+	query := fmt.Sprintf("https://api.vk.com/method/%s?v=5.24&%s", method, params)
+
+	log.Printf("%s\n", query)
 
 	resp, err := http.Get(query)
 	if err != nil { return }
@@ -77,4 +81,12 @@ func (client *Client) Call(method string, params []string, response interface{})
 	if parsedData.Error != "" { return errors.New(parsedData.Error) }
 
 	return nil
+}
+
+func (client *Client) SequreCall(method string, params string, response interface{}) (err error) {
+	return client.Call(method, fmt.Sprintf("access_token=%s&%s", client.serverAccessToken, params), response)
+}
+
+func (client *Client) Call(method string, params string, response interface{}) (err error) {
+	return client.PlainCall(method, params, response)
 }
