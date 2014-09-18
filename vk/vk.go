@@ -100,7 +100,7 @@ func (client *Client) PlainCall(method string, params url.Values, response inter
 	return nil
 }
 
-func (client *Client) SequreCall(method string, params url.Values, response interface{}) (err error) {
+func (client *Client) SecureCall(method string, params url.Values, response interface{}) (err error) {
 	params.Add("access_token", client.serverAccessToken)
 	return client.Call(method, params, response)
 }
