@@ -27,11 +27,19 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 	client.appId = id
 	client.appSecret = secret
 
-	query := fmt.Sprintf("https://oauth.vk.com/access_token?client_id=%s&client_secret=%s&v=5.24&grant_type=client_credentials", client.appId, client.appSecret)
+	query, err := url.Parse("https://oauth.vk.com/access_token")
+	params := url.Values{}
+	params.Set("client_id", client.appId)
+	params.Set("client_secret", client.appSecret)
+	params.Set("v", "5.24")
+	params.Set("grant_type", "client_credentials")
+	query.RawQuery = params.Encode()
 
-	log.Printf("%s\n", query)
+	url := query.String()
 
-	resp, err := http.Get(query)
+	log.Printf("%s\n", url)
+
+	resp, err := http.Get(url)
 	if err != nil { return }
 
 	defer resp.Body.Close()
