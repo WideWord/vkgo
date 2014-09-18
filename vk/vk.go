@@ -16,10 +16,15 @@ type Client struct {
 	appId string
 	appSecret string
 	serverAccessToken string
+	httpRequestFunc func(string) (*http.Response, error)
 }
 
 func NewClient() *Client {
 	client := new(Client)
+	client.httpRequestFunc = func(url string) (res *http.Response, err error) {
+		res, err = http.Get(url)
+		return
+	}
 	return client
 }
 
@@ -39,7 +44,7 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 
 	log.Printf("%s\n", url)
 
-	resp, err := http.Get(url)
+	resp, err := client.httpRequestFunc(url)
 	if err != nil { return }
 
 	defer resp.Body.Close()
@@ -76,7 +81,7 @@ func (client *Client) PlainCall(method string, params url.Values, response inter
 
 	log.Printf("%s\n", url)
 
-	resp, err := http.Get(url)
+	resp, err := client.httpRequestFunc(url)
 	if err != nil { return }
 
 	defer resp.Body.Close()
@@ -107,4 +112,8 @@ func (client *Client) SecureCall(method string, params url.Values, response inte
 
 func (client *Client) Call(method string, params url.Values, response interface{}) (err error) {
 	return client.PlainCall(method, params, response)
+}
+
+func (client *Client) SetHttpRequestFunc(f func(string) (*http.Response, error)) {
+	client.httpRequestFunc = f
 }
