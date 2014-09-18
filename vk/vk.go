@@ -3,6 +3,7 @@ package vk
 
 import(
 	"net/http"
+	"net/url"
 	"fmt"
 	"errors"
 	"io/ioutil"
@@ -54,12 +55,20 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 	return nil
 }
 
-func (client *Client) PlainCall(method string, params string, response interface{}) (err error) {
-	query := fmt.Sprintf("https://api.vk.com/method/%s?v=5.24&%s", method, params)
+func (client *Client) PlainCall(method string, params url.Values, response interface{}) (err error) {
 
-	log.Printf("%s\n", query)
+	query, err := url.Parse("https://api.vk.com/")
 
-	resp, err := http.Get(query)
+	query.Scheme = "https"
+	query.Host = "api.vk.com"
+	query.Path = fmt.Sprintf("/method/%s", method)
+	query.RawQuery = params.Encode()
+
+	url := query.String()
+
+	log.Printf("%s\n", url)
+
+	resp, err := http.Get(url)
 	if err != nil { return }
 
 	defer resp.Body.Close()
@@ -83,10 +92,11 @@ func (client *Client) PlainCall(method string, params string, response interface
 	return nil
 }
 
-func (client *Client) SequreCall(method string, params string, response interface{}) (err error) {
-	return client.Call(method, fmt.Sprintf("access_token=%s&%s", client.serverAccessToken, params), response)
+func (client *Client) SequreCall(method string, params url.Values, response interface{}) (err error) {
+	params.Add("access_token", client.serverAccessToken)
+	return client.Call(method, params, response)
 }
 
-func (client *Client) Call(method string, params string, response interface{}) (err error) {
+func (client *Client) Call(method string, params url.Values, response interface{}) (err error) {
 	return client.PlainCall(method, params, response)
 }
