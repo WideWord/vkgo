@@ -145,7 +145,7 @@ func (client *Client) AuthCall(hc *http.Client, method string, params url.Values
 
 func (client *Client) SecureCall(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
 	params.Add("client_secret", client.appSecret)
-	return client.Call(hc, method, params, response)
+	return client.AuthCall(hc, method, params, response)
 }
 
 func (client *Client) Call(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
