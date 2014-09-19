@@ -31,7 +31,9 @@ func (client *Client) authServer(hc *http.Client) (err error) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			if client.LogEverything {
+			if err == nil {
+				log.Printf("[VK] nil err")
+			} else if client.LogEverything {
 				log.Printf("[VK] authServer error %s", err.Error())
 			}
 		}
@@ -64,13 +66,17 @@ func (client *Client) authServer(hc *http.Client) (err error) {
 		Access_token string
 	}
 
+
 	err = json.Unmarshal(data, &parsedData)
 	if err != nil {
-		err := errors.New(fmt.Sprintf("%s\n====\n%s\n====", err.Error(), data))
+		err = errors.New(fmt.Sprintf("%s\n====\n%s\n====", err.Error(), data))
 		panic(err)
 	}
 
-	if parsedData.Error != "" { err := errors.New(parsedData.Error); panic(err) }
+	if parsedData.Error != "" {
+		err = errors.New(parsedData.Error)
+		panic(err)
+	}
 
 	client.serverAccessToken = parsedData.Access_token
 
@@ -120,7 +126,7 @@ func (client *Client) PlainCall(hc *http.Client, method string, params url.Value
 
 	err = json.Unmarshal(data, &parsedData)
 	if err != nil {
-		err := errors.New(fmt.Sprintf("%s\n====\n%s\n====", err.Error(), data))
+		err = errors.New(fmt.Sprintf("%s\n====\n%s\n====", err.Error(), data))
 		panic(err)
 	}
 
