@@ -9,6 +9,8 @@ import(
 	"io/ioutil"
 	"encoding/json"
 	"log"
+	"crypto/md5"
+	"encoding/hex"
 )
 
 
@@ -150,5 +152,11 @@ func (client *Client) SecureCall(hc *http.Client, method string, params url.Valu
 
 func (client *Client) Call(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
 	return client.PlainCall(hc, method, params, response)
+}
+
+func (client *Client) CheckUserAuthKey(user int, key string) bool {
+	str := fmt.Sprintf("%s_%d_%s", client.appId, user, client.appSecret)
+	hash := md5.Sum([]byte(str))
+	return key == hex.EncodeToString(hash[:])
 }
 
