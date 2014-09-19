@@ -8,7 +8,6 @@ import(
 	"errors"
 	"io/ioutil"
 	"encoding/json"
-	"log"
 )
 
 
@@ -16,21 +15,16 @@ type Client struct {
 	appId string
 	appSecret string
 	serverAccessToken string
-	httpRequestFunc func(string) (*http.Response, error)
 }
 
-func NewClient() *Client {
+func NewClient(appId string, appSecret string) *Client {
 	client := new(Client)
-	client.httpRequestFunc = func(url string) (res *http.Response, err error) {
-		res, err = http.Get(url)
-		return
-	}
+	client.appId = appId
+	client.appSecret = appSecret
 	return client
 }
 
-func (client *Client) AuthServer(id string, secret string) (err error) {
-	client.appId = id
-	client.appSecret = secret
+func (client *Client) authServer(hc *http.Client) (err error) {
 
 	query, err := url.Parse("https://oauth.vk.com/access_token")
 	params := url.Values{}
@@ -42,9 +36,7 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 
 	url := query.String()
 
-	log.Printf("%s\n", url)
-
-	resp, err := client.httpRequestFunc(url)
+	resp, err := hc.Get(url)
 	if err != nil { return }
 
 	defer resp.Body.Close()
@@ -68,7 +60,7 @@ func (client *Client) AuthServer(id string, secret string) (err error) {
 	return nil
 }
 
-func (client *Client) PlainCall(method string, params url.Values, response interface{}) (err error) {
+func (client *Client) PlainCall(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
 
 	query, err := url.Parse("https://api.vk.com/")
 
@@ -79,9 +71,7 @@ func (client *Client) PlainCall(method string, params url.Values, response inter
 
 	url := query.String()
 
-	log.Printf("%s\n", url)
-
-	resp, err := client.httpRequestFunc(url)
+	resp, err := hc.Get(url)
 	if err != nil { return }
 
 	defer resp.Body.Close()
@@ -105,15 +95,15 @@ func (client *Client) PlainCall(method string, params url.Values, response inter
 	return nil
 }
 
-func (client *Client) SecureCall(method string, params url.Values, response interface{}) (err error) {
+func (client *Client) SecureCall(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
+	if client.serverAccessToken == "" {
+		client.authServer(hc)
+	}
 	params.Add("access_token", client.serverAccessToken)
-	return client.Call(method, params, response)
+	return client.Call(hc, method, params, response)
 }
 
-func (client *Client) Call(method string, params url.Values, response interface{}) (err error) {
-	return client.PlainCall(method, params, response)
+func (client *Client) Call(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
+	return client.PlainCall(hc, method, params, response)
 }
 
-func (client *Client) SetHttpRequestFunc(f func(string) (*http.Response, error)) {
-	client.httpRequestFunc = f
-}
