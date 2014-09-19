@@ -59,11 +59,10 @@ func (client *Client) authServer(hc *http.Client) (err error) {
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil { panic(err) }
 
-	type ParsedData struct {
+	var parsedData struct {
 		Error string
 		Access_token string
 	}
-	var parsedData ParsedData
 
 	err = json.Unmarshal(data, &parsedData)
 	if err != nil {
@@ -109,11 +108,13 @@ func (client *Client) PlainCall(hc *http.Client, method string, params url.Value
 	data, err := ioutil.ReadAll(resp.Body)
 	if err != nil { panic(err) }
 
-	type ParsedData struct {
-		Error string
+	var parsedData struct {
+		Error struct {
+			Error_code int
+			Error_msg string
+		}
 		Response interface{}
 	}
-	var parsedData ParsedData
 
 	parsedData.Response = response
 
@@ -123,16 +124,21 @@ func (client *Client) PlainCall(hc *http.Client, method string, params url.Value
 		panic(err)
 	}
 
-	if parsedData.Error != "" { err = errors.New(parsedData.Error); panic(err) }
+	if parsedData.Error.Error_msg != "" { err = errors.New(parsedData.Error.Error_msg); panic(err) }
 
 	return nil
 }
 
-func (client *Client) SecureCall(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
+func (client *Client) AuthCall(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
 	if client.serverAccessToken == "" {
 		client.authServer(hc)
 	}
 	params.Add("access_token", client.serverAccessToken)
+	return client.Call(hc, method, params, response)
+}
+
+func (client *Client) SecureCall(hc *http.Client, method string, params url.Values, response interface{}) (err error) {
+	params.Add("client_secret", client.appSecret)
 	return client.Call(hc, method, params, response)
 }
 
