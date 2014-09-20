@@ -11,6 +11,7 @@ import(
     "log"
     "crypto/md5"
     "encoding/hex"
+    "sort"
 )
 
 
@@ -160,12 +161,12 @@ func (client *Client) CheckUserAuthKey(user int, key string) bool {
     return key == hex.EncodeToString(hash[:])
 }
 
-func (client *Client) CheckQuerySig(query map[string]string) {
+func (client *Client) CheckQuerySig(query map[string]string) bool {
     src := ""
 
     keys := []string{}
     for k, _ := range query { keys = append(keys, k) }
-    sort.String(keys)
+    sort.Strings(keys)
     for _, k := range keys {
         if k == "sig" { continue }
         src = src + k + "=" + query[k];
